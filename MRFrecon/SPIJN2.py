@@ -8,6 +8,7 @@ SPIJN with support for fixed parameters added
 import os
 import signal
 import time
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -53,6 +54,7 @@ def __get_n_jobs(n_jobs=None):
     if isinstance(n_jobs, int):
         return n_jobs
     else:
+        warnings.warn('n_jobs was not set explicitly, maximum is used, not always an improvement!')
         try:  # Only works on some linux versions, better for cluster
             return len(os.sched_getaffinity(0))
         except AttributeError:
