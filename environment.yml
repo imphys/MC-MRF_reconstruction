@@ -1,0 +1,12 @@
+name: mrfrecon
+channels:
+  - defaults
+  - conda-forge
+  - frankong
+dependencies:
+  - python>=3.6
+  - sigpy>=0.1.23
+  - numpy
+  - scipy
+  - h5py
+  - matplotlib
