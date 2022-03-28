@@ -95,7 +95,8 @@ The following code solves for the joint sparse components after low rank inversi
     data.to_h5('./')
 
 
-A working version of this is contained in ``example.py``
+A working version of this is contained in ``example.py``.
+First download the data from location as specified in ``example_data/readme.txt``.
 
 
 -----

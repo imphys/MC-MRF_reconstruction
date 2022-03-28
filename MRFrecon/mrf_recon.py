@@ -108,6 +108,7 @@ def recon_lr_admm(data, settings):
                  max_iter=settings.getint('max_admm_iter'),
                  max_cg_iter=settings.getint('max_cg_iter'),
                  outpath=settings.get('admm_outpath'),
+                 n_jobs=settings.getint('n_jobs'),
                  **recon_settings(settings))
 
     # Solve for components
@@ -143,7 +144,7 @@ def recon_lr_invert_spijn(data, settings):
     # Solve for components
     data.spijn_solve(settings.getfloat('spijn_param'),
                      max_iter=settings.getint('max_spijn_iter'),
-                     verbose=settings.getint('verbose'), norm_correction=False)
+                     verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
@@ -167,12 +168,12 @@ def recon_admm_into_spijn(data, settings):
     data.lr_admm(admm_param=settings.getfloat('admm_param'),
                  max_iter=settings.getint('max_admm_iter'),
                  max_cg_iter=settings.getint('max_cg_iter'),
-                 outpath=settings.get('admm_outpath'),
+                 outpath=settings.get('admm_outpath'), n_jobs=settings.getint('n_jobs'),
                  **recon_settings(settings))
 
     # calc spijn after convergence of admm
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
-                     verbose=settings.getint('verbose'), norm_correction=False)
+                     verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
@@ -231,7 +232,7 @@ def recon_sense_into_spijn(data, settings):
 
     # Solve for components
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
-                     verbose=settings.getint('verbose'), norm_correction=False)
+                     verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
@@ -298,7 +299,7 @@ def recon_wavelet_into_spijn(data, settings):
 
     # Solve for components
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
-                     verbose=settings.getint('verbose'), norm_correction=False)
+                     verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
@@ -321,7 +322,7 @@ def recon_direct_spijn(data, settings):
                         max_admm_iter=settings.getint('max_admm_iter'),
                         max_cg_iter=settings.getint('max_cg_iter'),
                         max_iter=settings.getint('max_spijn_iter'),
-                        reg_param=settings.getfloat('spijn_param'), norm_correction=False,
+                        reg_param=settings.getfloat('spijn_param'), norm_correction=False, n_jobs=settings.getint('n_jobs'),
                         **recon_settings(settings)
                         )
 
@@ -349,7 +350,7 @@ def recon_test(data, settings):
                         max_iter=settings.getint('max_spijn_iter'), verbose=settings.getint('verbose'),
                         reg_param=settings.getfloat('spijn_param'), compute_device=settings.getint('compute_device'),
                         lstsq_solver=settings.get('lstsq_solver'),
-                        tol_fac=settings.getfloat('tol_fac'),
+                        tol_fac=settings.getfloat('tol_fac'), n_jobs=settings.getint('n_jobs'),
                         max_power_iter=settings.getint('max_power_iter', max_power_iter_def))
 
     # Low rank inversion image reconstruction
