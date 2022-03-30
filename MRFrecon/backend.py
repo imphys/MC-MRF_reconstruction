@@ -833,7 +833,7 @@ class MrfData:
 
         for sl_ in sls:
             if sp.get_device(maps) != device and maps.ndim == 4:
-                if kmaps.shape[0] == 1:
+                if maps.shape[0] == 1:
                     kmaps = sp.to_device(maps[0], device=device)
                 else:
                     kmaps = sp.to_device(maps[sl_], device=device)
