@@ -1248,7 +1248,7 @@ class MrfData:
         # %%
         # Create result matrices
         indices = np.zeros(imgseq.shape[0], dtype=np.int32)
-        max_vals = np.zeros(imgseq.shape[0], dtype=np.complex128)
+        max_vals = np.zeros(imgseq.shape[0], dtype=np.float64)
         phaseimg = phase_vals = np.zeros(imgseq.shape[0], dtype=np.float64)
 
         for dictionary_mask, measurement_mask in tqdm(zip(self.fixed_par_dict_masks, self.fixed_par_img_masks),
