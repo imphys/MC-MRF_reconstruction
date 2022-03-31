@@ -10,3 +10,5 @@ dependencies:
   - scipy
   - h5py
   - matplotlib
+  - natbib
+  - joblib
