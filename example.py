@@ -1,5 +1,5 @@
 """
-Example script to show how to use the
+Example script to show how to use the proposed MRF reconstruction.
 """
 
 import h5py
@@ -42,7 +42,7 @@ data3 = data.copy()
 # compress dictionary to rank 10
 data.compress_dictionary(10)
 
-compute_device = -1
+compute_device = 0
 # Espirit calc for sensitivity maps, with reconstruction matrix of size 256
 data.mrf_espirit(256, compute_device=compute_device, tol_fac=.005, )
 
@@ -56,7 +56,7 @@ data.lr_inversion(compute_device=compute_device, tol_fac=.005)
 data.rotate2real()
 
 # Solve for single component MRF
-data.single_component_match(verbose=2)
+data.single_component_match(verbose=1)
 
 # Save to .h5
 data.to_h5('./example_data/', 'lr_inv_single.h5')
@@ -79,7 +79,7 @@ data2.lr_admm(2e-3, compute_device=compute_device, n_jobs=1)
 # Note: low rank admm does not need rotate2real()!
 
 # Solve for components with a joint sparse regularization parameter of 0.15
-data2.spijn_solve(0.15, verbose=2, n_jobs=1)
+data2.spijn_solve(0.15, verbose=1, n_jobs=1)
 
 # Save to .h5
 data2.to_h5('./example_data/', 'lr_admm_spijn.h5')
@@ -98,7 +98,7 @@ data3.coil_compression(5)
 
 # Direct component reconstruction
 data3.spijn_from_ksp(admm_param=2e-3, reg_param=0.25,
-                     compute_device=compute_device, verbose=2, n_jobs=1)
+                     compute_device=compute_device, verbose=1, n_jobs=1)
 
 # Save to .h5
 data3.to_h5('./example_data/', 'direct.h5')

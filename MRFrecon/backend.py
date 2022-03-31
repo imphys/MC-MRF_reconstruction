@@ -852,7 +852,7 @@ class MrfData:
             sigmas.append(sig)
         if isinstance(sl, int):
             sigmas = sigmas[0]
-        return sigmas
+        re
 
     def lr_inversion(self, batchsize=None, oversamp=1.25, warmstart=False,
                      lam: float = 0, bias: np.ndarray = None,
@@ -1034,7 +1034,7 @@ class MrfData:
     def lr_admm(self, admm_param: float, batchsize: int = None, oversamp: float = 1.25,
                 max_iter: int = 10, max_cg_iter: int = 20, compute_device=-1,
                 outpath=None, regparam=None, weights=None,
-                verbose=1, lstsq_solver=None, tol=None, tol_fac=0.001,
+                verbose=1, lstsq_solver='PrimalDualHybridGradient', tol=None, tol_fac=0.001,
                 norm_ksp=True, n_jobs=None, norm_correction=False, **kwargs):
         """" Low rank MC-ADMM image and component reconstruction
 
@@ -1182,12 +1182,14 @@ class MrfData:
                                    local_admm_param * np.linalg.norm(lag_mult) ** 2
                 print('Objective function value: |GFSx-y| + mu2|x-Dc+v| = {}'.format(residuals[3, it]))
 
-                # convergence rate
-                if it > 0:
-                    num = np.linalg.norm(imgseq_old - self.imgseq)
-                    rate = num / np.linalg.norm(self.imgseq)
+            # convergence rate
+            if it > 0:
+                num = np.linalg.norm(imgseq_old - self.imgseq)
+                rate = num / np.linalg.norm(self.imgseq)
+                if verbose:
                     print('Convergence rate = {}'.format(rate))
-                imgseq_old = self.imgseq
+                converged = rate<tol_fac
+            imgseq_old = self.imgseq
 
             if outpath is not None:
                 self.residuals = residuals
@@ -1280,7 +1282,7 @@ class MrfData:
 
                 phases = np.angle(maxes)
                 phase_vals[mask] = np.take_along_axis(phases, np.expand_dims(ind_match, axis=0), axis=0).flatten()
-            if calc_nrmse:
+            if calc_nrmse or verbose>1:
                 for k in chunk:
                     # Calculate NRMSE
                     nrmseimg[k] = np.sqrt(
@@ -1295,27 +1297,25 @@ class MrfData:
         # mask values
         # t1img[pdimg < 0.3] = 0
         # t2img[pdimg < 0.3] = 0
-
+        
         if verbose > 1:
             # plot results
             plt.figure()
-            plt.subplot(2, 2, 1)
-            plt.imshow(self.to_image(t1img), origin="lower")
-            plt.title("T1 image")
+            axs = []
+            axs.append(plt.subplot(2, 2, 1))
+            plt.imshow(self.to_image(t1img), origin="lower", interpolation='nearest')
+            plt.title("$T_1$ image")
             plt.colorbar()
-            plt.subplot(2, 2, 2)
-            plt.imshow(self.to_image(t2img), origin="lower")
-            plt.title("T2 image")
+            axs.append(plt.subplot(2, 2, 2))
+            plt.imshow(self.to_image(t2img), origin="lower", interpolation='nearest')
+            plt.title("$T_2$ image")
             plt.colorbar()
-            plt.subplot(2, 2, 3)
-            plt.imshow(self.to_image(pdimg), origin="lower")
-            plt.title("PD image")
+            axs.append(plt.subplot(2, 2, 3))
+            plt.imshow(self.to_image(np.abs(pdimg)), origin="lower", interpolation='nearest')
+            plt.title("$M_0$ image")
             plt.colorbar()
-            plt.subplot(2, 2, 4)
-            plt.imshow(self.to_image(np.divide(nrmseimg, pdimg, out=np.zeros_like(nrmseimg), where=pdimg != 0)),
-                       origin="lower")
-            plt.title("RMSE image")
-            plt.colorbar()
+            for ax in axs:
+                ax.set_axis_off()
             plt.show()
             print("max T1 value")
             print(np.max(t1img))
@@ -1416,7 +1416,7 @@ class MrfData:
                 correct_im_size=True,
                 max_iter=max_iter, tol=5e-4,
                 fixed_par_img_masks=fixed_par_img_masks,
-                fixed_par_dict_masks=fixed_par_dict_masks, norms=x_norm[0])
+                fixed_par_dict_masks=fixed_par_dict_masks, norms=x_norm[0], n_jobs=n_jobs)
 
             # fill data to image format to forget about a mask
             cr_long = np.zeros((lr_imgseq_flat.shape[1], cr.shape[1]), dtype=cr.dtype)
