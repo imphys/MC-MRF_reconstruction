@@ -852,6 +852,7 @@ class MrfData:
             sigmas.append(sig)
         if isinstance(sl, int):
             sigmas = sigmas[0]
+        re
 
     def lr_inversion(self, batchsize=None, oversamp=1.25, warmstart=False,
                      lam: float = 0, bias: np.ndarray = None,
