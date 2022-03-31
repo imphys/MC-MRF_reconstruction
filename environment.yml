@@ -1,4 +1,4 @@
-name: mrfrecon-final
+name: mrfrecon
 channels:
   - defaults
   - conda-forge
