@@ -1126,13 +1126,13 @@ class MrfData:
             if verbose > 1:
                 for i in range(lag_mult.shape[2]):
                     plt.subplot(1, 3, 1)
-                    plt.imshow(self.imgseq[0, :, i].reshape(224, 224))
+                    plt.imshow(self.imgseq[0, :, i].reshape(self.imagesize, self.imagesize))
                     plt.colorbar()
                     plt.subplot(1, 3, 2)
-                    plt.imshow((self.imgseq[0, :, i] - dc[0, :, i]).reshape(224, 224))
+                    plt.imshow((self.imgseq[0, :, i] - dc[0, :, i]).reshape(self.imagesize, self.imagesize))
                     plt.colorbar()
                     plt.subplot(1, 3, 3)
-                    plt.imshow(dc[0, :, i].reshape(224, 224))
+                    plt.imshow(dc[0, :, i].reshape(self.imagesize, self.imagesize))
                     plt.colorbar()
                     plt.show()
 
