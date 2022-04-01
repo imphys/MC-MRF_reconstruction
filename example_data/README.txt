@@ -1,1 +1,1 @@
-Download data from https://figshare.com/s/243037b4f1ecdc467d38 or doi 10.4121/19434527
+Download data from https://doi.org/10.4121/19434527
