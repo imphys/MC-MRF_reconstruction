@@ -7,7 +7,7 @@
 """
 import numpy as np
 
-from backend import MrfData
+from .backend import MrfData
 
 max_power_iter_def = 15
 
