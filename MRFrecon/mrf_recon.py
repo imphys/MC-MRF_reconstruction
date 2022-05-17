@@ -293,7 +293,8 @@ def recon_direct_spijn(data, settings):
                         max_admm_iter=settings.getint('max_admm_iter'),
                         max_cg_iter=settings.getint('max_cg_iter'),
                         max_iter=settings.getint('max_spijn_iter'),
-                        reg_param=settings.getfloat('spijn_param'), norm_correction=False,
+                        reg_param=settings.getfloat('spijn_param'),
+                        norm_correction=False,
                         n_jobs=settings.getint('n_jobs'),
                         **recon_settings(settings)
                         )

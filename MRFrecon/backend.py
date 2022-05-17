@@ -1129,12 +1129,15 @@ class MrfData:
                 for i in range(lag_mult.shape[2]):
                     plt.subplot(1, 3, 1)
                     plt.imshow(self.imgseq[0, :, i].reshape(self.imagesize, self.imagesize))
+                    plt.title('imgseq')
                     plt.colorbar()
                     plt.subplot(1, 3, 2)
                     plt.imshow((self.imgseq[0, :, i] - dc[0, :, i]).reshape(self.imagesize, self.imagesize))
                     plt.colorbar()
+                    plt.title('diff imgseq-DC')
                     plt.subplot(1, 3, 3)
                     plt.imshow(dc[0, :, i].reshape(self.imagesize, self.imagesize))
+                    plt.title('DC')
                     plt.colorbar()
                     plt.show()
 
@@ -1375,11 +1378,14 @@ class MrfData:
         figs = []
         for j in range(self.numslice):
             for i in range(len(self.index)):
-                figs.append(plt.figure())
                 if normalize:
-                    plt.imshow(self.to_image(self.comp[j, :, i] / self.comp[j].sum(axis=-1)))
+                    im = self.comp[j, :, i] / self.comp[j].sum(axis=-1)
+                    if im.max()<.01:
+                        continue
                 else:
-                    plt.imshow(self.to_image(self.comp[j, :, i]))
+                    im = self.comp[j, :, i]
+                figs.append(plt.figure())
+                plt.imshow(self.to_image(im))
                 plt.colorbar()
                 if self.index[0] >= 0:
                     plt.title('$T_1={:.1f}, T_2={:.1f}$'.format(self.dictt1[self.index[i]],

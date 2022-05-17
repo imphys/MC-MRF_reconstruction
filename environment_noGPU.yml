@@ -12,4 +12,3 @@ dependencies:
   - matplotlib
   - nibabel
   - joblib
-  - cupy=6.0.0
