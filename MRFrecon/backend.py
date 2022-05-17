@@ -15,6 +15,7 @@ import sigpy.mri as spmri
 import sigpy.plot as pl
 from PIL import Image
 from tqdm import tqdm
+import pandas as pd				   
 
 try:
     import nibabel as nib
@@ -626,7 +627,7 @@ class MrfData:
             for sl in range(self.numslice):
                 mult = sp.linop.Multiply((imagesize, imagesize), self.maps[sl, ...])
                 sumimg = np.abs(mult.H(sp.to_device(image[sl, ...], device=cpu)))
-                self.mask[sl, ...] = sumimg > (mask_thresh * np.max(sumimg))
+                self.mask[sl, ...] = sumimg > (mask_thresh * np.nanpercentile(sumimg, 99))
                 scipy.ndimage.binary_closing(self.mask[sl], iterations=3, output=self.mask[sl])
 
         self.maps *= self.mask[:, None, ...]
@@ -1349,6 +1350,27 @@ class MrfData:
             nib.save(img, os.path.join(output_path, f'single_comp_{name}.nii.gz'))
         return
 
+    def save_multi_comp_nii(self, output_path, aff=None, ):
+        if aff is None:
+            aff = np.zeros((4, 4))
+            aff[0, 1] = 1
+            aff[1, 2] = -1
+            aff[2, 0] = 1
+            aff[3, 3] = 1
+        vfull = []
+        df = []
+        for i in range(self.comp.shape[-1]):
+            data = self.comp[..., i]
+            v = np.asarray([self.to_image(ii) for ii in data])
+            v[(1 - self.mask).astype(bool)] = np.nan
+            vfull.append(v)
+            df.append({'T1':self.dictt1[self.index[i]],'T2': self.dictt2[self.index[i]]})
+        pd.DataFrame(df).to_csv(os.path.join(output_path, f'multi_comp.csv'), sep=';')
+        vfull = np.stack(vfull).transpose((1,2,3,0))
+        img = nib.Nifti1Image(vfull, aff)
+        nib.save(img, os.path.join(output_path, f'multi_comp.nii.gz'))
+        return
+
     def plot_comp(self, normalize=False):
         figs = []
         for j in range(self.numslice):
@@ -1397,7 +1419,7 @@ class MrfData:
         # avgimg = np.abs(np.sum(lr_imgseq, axis=0) / lr_imgseq.shape[0])
         # mask = avgimg > np.sum(avgimg) / (2*lr_imgseq.shape[1])
 
-        mask = np.abs(lr_imgseq_flat[0, :]) > 0.1
+        mask = np.abs(lr_imgseq_flat[0, :]) > (0.1*np.nanpercentile(np.abs(lr_imgseq_flat[0, :]), 95))
         try:
             mask_im = self.spijn_mask.flatten()  # np.abs(lr_imgseq_flat[0, :]) > 0.1
             print('SPIJN masking difference:', np.sum(mask) - np.sum(mask_im))

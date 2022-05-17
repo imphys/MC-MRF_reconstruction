@@ -7,7 +7,7 @@ import warnings
 import h5py
 import numpy as np
 from PIL import Image
-
+import nibabel as nib
 try:
     from DICOM_files_Philips import read_enh_dicom
 except ImportError:
@@ -109,15 +109,19 @@ def load_data(settings):
     data.norms = norms
 
     def load_mask(mask_path):
-        maskimage = Image.open(mask_path).convert('1')
-        mask = np.array(maskimage)
+        if '.nii' in mask_path:
+            mask = nib.load(mask_path).get_fdata().astype(bool)
+        else:
+            maskimage = Image.open(mask_path).convert('1')
+            mask = np.array(maskimage)
 
-        imagesize = mask.shape[0]
-        numslice = int(mask.shape[1] // imagesize)
-        if imagesize * numslice != mask.shape[1]:
-            raise IOError("Mask image of invalid shape, width is not an integer multiple of height")
-        mask = mask.reshape((imagesize, imagesize, numslice), order='F')
-        return mask.transpose(2, 0, 1)
+            imagesize = mask.shape[0]
+            numslice = int(mask.shape[1] // imagesize)
+            if imagesize * numslice != mask.shape[1]:
+                raise IOError("Mask image of invalid shape, width is not an integer multiple of height")
+            mask = mask.reshape((imagesize, imagesize, numslice), order='F')
+            mask = mask.transpose(2, 0, 1)
+        return mask				   
 
     if settings.get('mask_path') is not None:
         data.mask = load_mask(settings['mask_path'])

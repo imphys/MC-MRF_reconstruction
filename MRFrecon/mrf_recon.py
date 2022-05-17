@@ -7,7 +7,7 @@
 """
 import numpy as np
 
-from .backend import MrfData
+from backend import MrfData
 
 max_power_iter_def = 15
 
@@ -41,6 +41,23 @@ def recon_settings(settings):
                 )
 
 
+def pre_proc(data, settings, fixed_par=True):
+    # compress dictionary
+    data.compress_dictionary(settings.getint('reconstruction_rank'))
+
+    # Espirit calc for sensitivity maps
+    data.mrf_espirit(**espirit_settings(settings))
+
+    if data.spijn_mask is not None:
+        data.spijn_mask[~data.mask] = False
+
+    # compress coils
+    data.coil_compression(settings.getint('num_virt_coil'))
+    if fixed_par:
+        # Step for b1map processing, doesn't hurt if there is no b1map
+        data.fixed_par_processing(redo=True, flatten=True)
+
+
 def recon_fbp(data, settings):
     print("Start filtered back projection recon with single component matching")
     data.filt_back_proj(settings.getint('imagesize'), compute_device=settings.getint('compute_device'),
@@ -63,15 +80,7 @@ def recon_fbp(data, settings):
 
 def recon_lr_invert(data, settings):
     print("Start Low rank inversion reconstruction with single component matching")
-    # compress dictionary
-    data.compress_dictionary(settings.getint('reconstruction_rank'), comp_device=settings.getint('compute_device'))
-
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings))
-
-    # compress coils
-    data.coil_compression(settings.getint('num_virt_coil'))
-
+    pre_proc(data, settings)
     # Low rank inversion image reconstruction
     data.lr_inversion(**recon_settings(settings),
                       max_iter=settings.getint('max_cg_iter'))
@@ -91,24 +100,12 @@ def recon_lr_invert(data, settings):
 
 def recon_lr_admm(data, settings):
     print("Start Low rank ADMM reconstruction with single component matching")
-    # compress dictionary
-    data.compress_dictionary(settings.getint('reconstruction_rank'), comp_device=settings.getint('compute_device'))
-
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings), )
-
-    # compress coils
-    data.coil_compression(settings.getint('num_virt_coil'))
-
-    # Step for b1map processing, doesn't hurt if there is no b1map
-    data.fixed_par_processing(redo=True, flatten=True)
-
+    pre_proc(data, settings)
     # calc admm image sequence
     data.lr_admm(admm_param=settings.getfloat('admm_param'),
                  max_iter=settings.getint('max_admm_iter'),
                  max_cg_iter=settings.getint('max_cg_iter'),
-                 outpath=settings.get('admm_outpath'),
-                 n_jobs=settings.getint('n_jobs'),
+                 outpath=settings.get('admm_outpath'), n_jobs=settings.getint('n_jobs'),
                  **recon_settings(settings))
 
     # Solve for components
@@ -123,14 +120,7 @@ def recon_lr_admm(data, settings):
 
 def recon_lr_invert_spijn(data, settings):
     print("Start lr inversion with SPIJN reconstruction")
-    # compress dictionary
-    data.compress_dictionary(settings.getint('reconstruction_rank'), comp_device=settings.getint('compute_device'))
-
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings))
-    # compress coils
-    data.coil_compression(settings.getint('num_virt_coil'))
-
+    pre_proc(data, settings, False)
     # Low rank inversion image reconstruction
     data.lr_inversion(
         max_iter=settings.getint('max_cg_iter'),
@@ -145,25 +135,14 @@ def recon_lr_invert_spijn(data, settings):
     data.spijn_solve(settings.getfloat('spijn_param'),
                      max_iter=settings.getint('max_spijn_iter'),
                      verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
-
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
 
 
 def recon_admm_into_spijn(data, settings):
     print("Start ADMM into SPIJN reconstruction")
-    # compress dictionary
-    data.compress_dictionary(settings.getint('reconstruction_rank'))
-
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings))
-
-    # compress coils
-    data.coil_compression(settings.getint('num_virt_coil'))
-
-    # Step for b1map processing, doesn't hurt if there is no b1map
-    data.fixed_par_processing(redo=True, flatten=True)
-
+    pre_proc(data, settings)
     # calc admm image sequence
     data.lr_admm(admm_param=settings.getfloat('admm_param'),
                  max_iter=settings.getint('max_admm_iter'),
@@ -174,6 +153,8 @@ def recon_admm_into_spijn(data, settings):
     # calc spijn after convergence of admm
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
                      verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
+
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
 
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
@@ -215,7 +196,8 @@ def recon_sense_into_spijn(data, settings):
 
     # Espirit calc for sensitivity maps
     data.mrf_espirit(**espirit_settings(settings))
-
+    if data.spijn_mask is not None:
+        data.spijn_mask[~data.mask] = False
     # sense image reconstruction
     data.senserecon(compute_device=settings.getint('compute_device'),
                     verbose=settings.getint('verbose'),
@@ -234,6 +216,7 @@ def recon_sense_into_spijn(data, settings):
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
                      verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
 
@@ -243,6 +226,7 @@ def recon_wavelet(data, settings):
 
     # Espirit calc for sensitivity maps
     data.mrf_espirit(**espirit_settings(settings))
+    data.spijn_mask[~data.mask] = False
 
     data.coil_compression(settings.getint('num_virt_coil'))
 
@@ -275,11 +259,7 @@ def recon_wavelet(data, settings):
 def recon_wavelet_into_spijn(data, settings):
     print("Start sense-wavelet with SPIJN reconstruction")
 
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings))
-
-    data.coil_compression(settings.getint('num_virt_coil'))
-
+    pre_proc(data, settings, fixed_par=False)
     # sense image reconstruction
     data.waveletrecon(lamda=settings.getfloat('regularization_lambda'),
                       compute_device=settings.getint('compute_device'), verbose=settings.getint('verbose'),
@@ -301,31 +281,24 @@ def recon_wavelet_into_spijn(data, settings):
     data.spijn_solve(settings.getfloat('spijn_param'), max_iter=settings.getint('max_spijn_iter'),
                      verbose=settings.getint('verbose'), norm_correction=False, n_jobs=settings.getint('n_jobs'))
 
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
 
 
 def recon_direct_spijn(data, settings):
-    # compress dictionary
-    data.compress_dictionary(settings.getint('reconstruction_rank'))
-
-    # Espirit calc for sensitivity maps
-    data.mrf_espirit(**espirit_settings(settings))
-
-    # compress coils
-    data.coil_compression(settings.getint('num_virt_coil'))
-
-    # Step for b1map processing, doesn't hurt if there is no b1map
-    data.fixed_par_processing(redo=True, flatten=True)
+    pre_proc(data, settings, fixed_par=True)
 
     data.spijn_from_ksp(admm_param=settings.getfloat('admm_param'),
                         max_admm_iter=settings.getint('max_admm_iter'),
                         max_cg_iter=settings.getint('max_cg_iter'),
                         max_iter=settings.getint('max_spijn_iter'),
-                        reg_param=settings.getfloat('spijn_param'), norm_correction=False, n_jobs=settings.getint('n_jobs'),
+                        reg_param=settings.getfloat('spijn_param'), norm_correction=False,
+                        n_jobs=settings.getint('n_jobs'),
                         **recon_settings(settings)
                         )
 
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
 
@@ -367,6 +340,7 @@ def recon_test(data, settings):
     data.spijn_solve(0, max_iter=settings.getint('max_spijn_iter'),
                      verbose=settings.getint('verbose'), norm_correction=False)
 
+    data.save_multi_comp_nii(settings['reconstruction_output_path'])
     # Save to .h5
     data.to_h5(settings['reconstruction_output_path'], save_raw=False, save_dict=False)
 
