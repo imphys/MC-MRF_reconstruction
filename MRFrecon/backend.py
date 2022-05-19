@@ -1218,7 +1218,7 @@ class MrfData:
                                                           self.fixed_par_img_masks],
                                      fixed_par_dict_masks=self.fixed_par_dict_masks,
                                      S=self._S)
-        return residuals[3, it]
+        return residuals[3, it-1]
 
     def single_component_match(self, stepsize: int = 1000, verbose: int = 1,
                                absdict=False, calc_nrmse=True):
