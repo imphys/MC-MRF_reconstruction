@@ -288,7 +288,7 @@ def recon_wavelet_into_spijn(data, settings):
 
 def recon_direct_spijn(data, settings):
     pre_proc(data, settings, fixed_par=True)
-
+    data.spijn_mask[~data.mask] = False
     data.spijn_from_ksp(admm_param=settings.getfloat('admm_param'),
                         max_admm_iter=settings.getint('max_admm_iter'),
                         max_cg_iter=settings.getint('max_cg_iter'),

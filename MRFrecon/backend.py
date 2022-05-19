@@ -1218,7 +1218,7 @@ class MrfData:
                                                           self.fixed_par_img_masks],
                                      fixed_par_dict_masks=self.fixed_par_dict_masks,
                                      S=self._S)
-        return residuals[3, -1]
+        return residuals[3, it]
 
     def single_component_match(self, stepsize: int = 1000, verbose: int = 1,
                                absdict=False, calc_nrmse=True):
@@ -1560,7 +1560,7 @@ class MrfData:
                 **admm_settings, **kwargs
             )  # Perform real calculations
             print('matching time it 1: {0:.5f}s'.format(time.clock() - t0))
-            print('Relative output error = {}'.format(rel_err_old))
+            print('Relative output error = {:.3e}'.format(rel_err_old))
             prunn_comp = None
         else:
             print('Reused old first iteration solution')
