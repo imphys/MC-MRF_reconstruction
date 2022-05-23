@@ -112,7 +112,7 @@ class MrfData:
         old = self.__getattribute__(key)
         if skip_None and old is None:
             return None
-        else:
+        elif old is None:
             raise ValueError(f'Tried to select slice from non existing array {key}')
         new = old[sl_sel]
         if old.ndim==new.ndim:
