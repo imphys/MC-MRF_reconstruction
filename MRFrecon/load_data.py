@@ -129,10 +129,13 @@ def load_data(settings):
         data.spijn_mask = load_mask(settings['mask_spijn_path'])
 
     if settings['slices'] is not None:
-        sl_sel = eval(settings['slices'])
+        if ',' in settings['slices']:
+            sl_sel = np.fromstring(settings['slices'], dtype=int, sep=',')
+        else:
+            sl_sel = np.fromstring(settings['slices'], dtype=int, sep=' ')
         if isinstance(sl_sel, int):
             sl_sel = [sl_sel]
         for key in ['ksp', 'mask', 'spijn_mask', 'b1_map']:
-            data.sel_slice(key, sl_sel)
+            data.sel_slice(key, sl_sel, skip_None=True)
 
     return data

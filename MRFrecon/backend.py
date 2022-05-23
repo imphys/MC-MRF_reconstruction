@@ -108,13 +108,18 @@ class MrfData:
         self.b1_map = b1_map
         self.fixed_b1 = self.dictb1 is not None and b1_map is not None
 
-    def sel_slice(self, key, sl_sel):
+    def sel_slice(self, key, sl_sel, skip_None=False):
         old = self.__getattribute__(key)
+        if skip_None and old is None:
+            return None
+        else:
+            raise ValueError(f'Tried to select slice from non existing array {key}')
         new = old[sl_sel]
         if old.ndim==new.ndim:
             self.__setattr__(key, new)
         else:
             raise IndexError('Tried to slice array with wrong slice selection')
+        None
 
     @property
     def numslice(self):
