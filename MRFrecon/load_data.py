@@ -40,7 +40,6 @@ def load_b1(settings, ):
     b1_map = np.abs(b1_map[:, 0].transpose((0, 2, 1)))
     return b1_map
 
-
 def load_data(settings):
     # test if we need to calculate kspace and coordinates
     if settings['datasource'] == 'phantom':
@@ -121,12 +120,19 @@ def load_data(settings):
                 raise IOError("Mask image of invalid shape, width is not an integer multiple of height")
             mask = mask.reshape((imagesize, imagesize, numslice), order='F')
             mask = mask.transpose(2, 0, 1)
-        return mask				   
+        return mask
 
     if settings.get('mask_path') is not None:
         data.mask = load_mask(settings['mask_path'])
 
     if settings.get('mask_spijn_path') is not None:
         data.spijn_mask = load_mask(settings['mask_spijn_path'])
+
+    if settings['slices'] is not None:
+        sl_sel = eval(settings['slices'])
+        if isinstance(sl_sel, int):
+            sl_sel = [sl_sel]
+        for key in ['ksp', 'mask', 'spijn_mask', 'b1_map']:
+            data.sel_slice(key, sl_sel)
 
     return data
